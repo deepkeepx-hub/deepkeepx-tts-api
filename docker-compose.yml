@@ -1,0 +1,39 @@
+services:
+  tts-api-cpu:
+    image: deepkeepx/tts-api:latest-cpu
+    container_name: tts-api-cpu
+    restart: always
+    ports:
+      - "8080:8080"
+    build:
+      context: ./resource
+      dockerfile: Dockerfile
+      args:
+        TARGET_DEVICE: cpu
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./data:/app/data
+
+  tts-api-gpu:
+    image: deepkeepx/tts-api:latest-gpu
+    container_name: tts-api-gpu
+    restart: always
+    ports:
+      - "8081:8080"
+    build:
+      context: ./resource
+      dockerfile: Dockerfile
+      args:
+        TARGET_DEVICE: gpu
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./data:/app/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
