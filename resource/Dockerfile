@@ -37,9 +37,9 @@ ENV HF_HOME=/home/appuser/.cache/huggingface
 # 6. Copy source code
 COPY --chown=appuser:appuser . .
 
-# 7. Download and pre-package models during build (Using HF mirror for stable download)
+# 7. Download and pre-package models during build (Force CPU for downloading)
 ENV HF_ENDPOINT=https://hf-mirror.com
-RUN python -c "from kokoro import KPipeline; KPipeline(lang_code='a'); KPipeline(lang_code='z')"
+RUN python -c "from kokoro import KPipeline; KPipeline(lang_code='a', device='cpu'); KPipeline(lang_code='z', device='cpu')"
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
