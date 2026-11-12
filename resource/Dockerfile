@@ -39,7 +39,7 @@ COPY --chown=appuser:appuser . .
 
 # 7. Download and pre-package models during build (Force CPU for downloading)
 ENV HF_ENDPOINT=https://hf-mirror.com
-RUN python -c "from kokoro import KPipeline; KPipeline(lang_code='a', device='cpu'); KPipeline(lang_code='z', device='cpu')"
+RUN CUDA_VISIBLE_DEVICES="" python -c "from kokoro import KPipeline; KPipeline(lang_code='a'); KPipeline(lang_code='z')"
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
