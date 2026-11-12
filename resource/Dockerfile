@@ -16,10 +16,8 @@ RUN if [ "$TARGET_DEVICE" = "gpu" ]; then \
     fi
 
 # 3. Pre-install spacy and en_core_web_sm
-# Try official source first (fast on GitHub Actions), fallback to hf-mirror (for local builds in China)
 RUN pip install --no-cache-dir spacy && \
-    (pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl || \
-     pip install --no-cache-dir https://hf-mirror.com/spacy/en_core_web_sm/resolve/main/en_core_web_sm-any-py3-none-any.whl)
+    pip install --no-cache-dir https://hf-mirror.com/spacy/en_core_web_sm/resolve/main/en_core_web_sm-any-py3-none-any.whl
 
 # 4. Install Python dependencies
 COPY requirements.txt .
@@ -37,9 +35,15 @@ ENV HF_HOME=/home/appuser/.cache/huggingface
 # 6. Copy source code
 COPY --chown=appuser:appuser . .
 
-# 7. Download and pre-package models during build (Force CPU for downloading)
+# =========================================================
+# 7. Download and pre-package models during build
+# =========================================================
 ENV HF_ENDPOINT=https://hf-mirror.com
-RUN CUDA_VISIBLE_DEVICES="" python -c "from kokoro import KPipeline; KPipeline(lang_code='a'); KPipeline(lang_code='z')"
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu --timeout 120
+RUN python -c "from kokoro import KPipeline; KPipeline(lang_code='a'); KPipeline(lang_code='z')"
+RUN if [ "$TARGET_DEVICE" = "gpu" ]; then \
+        pip install --no-cache-dir --force-reinstall torch --index-url https://download.pytorch.org/whl/cu121 --timeout 120 --retries 5 ; \
+    fi
 
 EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
